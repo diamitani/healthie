@@ -3,17 +3,6 @@
   "buildCommand": "echo 'No build required for static site'",
   "outputDirectory": "web",
   "installCommand": "echo 'No install required'",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url",
-    "NEXT_PUBLIC_COGNITO_USER_POOL_ID": "@cognito_user_pool_id",
-    "NEXT_PUBLIC_COGNITO_CLIENT_ID": "@cognito_client_id",
-    "NEXT_PUBLIC_AWS_REGION": "@aws_region"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
