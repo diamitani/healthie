@@ -1,13 +1,8 @@
 {
   "version": 2,
-  "name": "healthie",
   "buildCommand": "echo 'No build required for static site'",
   "outputDirectory": "web",
-  "devCommand": "python -m http.server 3000",
   "installCommand": "echo 'No install required'",
-  "framework": null,
-  "public": false,
-  "regions": ["iad1"],
   "env": {
     "NEXT_PUBLIC_API_URL": "@api_url",
     "NEXT_PUBLIC_COGNITO_USER_POOL_ID": "@cognito_user_pool_id",
