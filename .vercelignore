@@ -1,0 +1,24 @@
+# Infrastructure
+infrastructure/
+backend/
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep only essentials on Vercel)
+DEPLOYMENT.md
+
+# Agents
+agents/
+
+# Local files
+*.log
+.DS_Store
+.env
+.env.local
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/

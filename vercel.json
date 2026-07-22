@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "name": "healthie",
+  "buildCommand": "echo 'No build required for static site'",
+  "outputDirectory": "web",
+  "devCommand": "python -m http.server 3000",
+  "installCommand": "echo 'No install required'",
+  "framework": null,
+  "public": false,
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@api_url",
+    "NEXT_PUBLIC_COGNITO_USER_POOL_ID": "@cognito_user_pool_id",
+    "NEXT_PUBLIC_COGNITO_CLIENT_ID": "@cognito_client_id",
+    "NEXT_PUBLIC_AWS_REGION": "@aws_region"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ]
+}

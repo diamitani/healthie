@@ -1,0 +1,29 @@
+{
+  "name": "healthie",
+  "version": "1.0.0",
+  "description": "Plain-English health document intelligence - Diamitani Industries",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel"
+  },
+  "keywords": [
+    "health",
+    "medical",
+    "document-intelligence",
+    "ai",
+    "rostr",
+    "diamitani-industries"
+  ],
+  "author": "Patrick Diamitani <patrick@diamitani.com>",
+  "license": "PROPRIETARY",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diamitani/healthie.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
