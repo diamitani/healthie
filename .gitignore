@@ -44,3 +44,4 @@ secrets.json
 *.pem
 *.key
 credentials.json
+.vercel
