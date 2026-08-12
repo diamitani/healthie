@@ -30,6 +30,7 @@
         <ul class="nav-menu">
           <li><a class="nav-link active" data-view-target="landing">Overview</a></li>
           <li><a class="nav-link" data-view-target="workspace">Workspace & Vault</a></li>
+          <li><a class="nav-link" data-view-target="trust">Trust & Security</a></li>
           <li><a class="nav-link" data-view-target="pricing">Pricing ($9-$19)</a></li>
           <li><a class="nav-link" data-view-target="qa-workbench">QA Workbench</a></li>
         </ul>
@@ -84,7 +85,7 @@
 
             <div class="hero-actions">
               <button class="btn btn-primary btn-lg" id="btn-hero-cta">
-                Analyze Document Free
+                Instant Access — No Email Confirm Required
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
 
@@ -94,11 +95,11 @@
             </div>
 
             <div class="hero-guarantee">
-              <span>🔒 HIPAA-Aligned Privacy</span>
+              <span>🔒 HIPAA-Aligned Security</span>
               <span>•</span>
               <span>🔬 PubMed Tier-1 Grounding</span>
               <span>•</span>
-              <span>⚡ 99.4% Extraction Accuracy</span>
+              <span>⚡ Zero Confirmation Friction</span>
             </div>
           </div>
 
@@ -144,21 +145,29 @@
     </section>
 
     <!-- ==========================================================================
-         VIEW 2: User Workspace Dashboard & Document Intelligence Vault
+         VIEW 2: User Workspace Dashboard (Multi-Site Engine: Personal, Family, Provider, QA)
          ========================================================================== -->
     <section class="view-section" id="view-workspace">
       <div class="container" style="padding-top: 40px; padding-bottom: 60px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
           <div>
             <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">Health Intelligence Workspace</h2>
             <p style="color: var(--color-ink-muted);">Upload lab reports, imaging notes, or medical bills to generate plain-English insights.</p>
           </div>
 
-          <div style="display: flex; gap: 12px;">
-            <button class="btn btn-outline btn-sm" data-preset-id="cbc">Load Sample CBC Lab</button>
-            <button class="btn btn-outline btn-sm" data-preset-id="lipid">Load Sample Lipid Panel</button>
-            <button class="btn btn-outline btn-sm" data-preset-id="eob">Load Sample Medical EOB</button>
+          <!-- Multi-Site Workspace Selector -->
+          <div style="display: flex; gap: 8px; background: var(--color-surface-alt); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+            <button class="btn btn-sm btn-primary" id="site-btn-personal" onclick="switchSite('personal')">👤 Personal Vault</button>
+            <button class="btn btn-sm btn-ghost" id="site-btn-family" onclick="switchSite('family')">👨‍👩‍👧 Family Vault</button>
+            <button class="btn btn-sm btn-ghost" id="site-btn-provider" onclick="switchSite('provider')">🩺 Clinician Share</button>
           </div>
+        </div>
+
+        <!-- Preset Loader -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+          <button class="btn btn-outline btn-sm" data-preset-id="cbc">Load Sample CBC Lab</button>
+          <button class="btn btn-outline btn-sm" data-preset-id="lipid">Load Sample Lipid Panel</button>
+          <button class="btn btn-outline btn-sm" data-preset-id="eob">Load Sample Medical EOB</button>
         </div>
 
         <!-- Drag & Drop Uploader -->
@@ -262,7 +271,56 @@
     </section>
 
     <!-- ==========================================================================
-         VIEW 3: Pricing & Subscription Model ($9 / $19 per month)
+         VIEW 3: Trust & Security Foundation Section (Layman Explanation)
+         ========================================================================== -->
+    <section class="view-section" id="view-trust">
+      <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <div style="text-align: center; max-width: 680px; margin: 0 auto 48px;">
+          <span class="badge badge-primary">Security & Posture</span>
+          <h2 style="font-size: 40px; font-weight: 800; margin: 12px 0 8px;">Trust & Security Foundation</h2>
+          <p style="color: var(--color-ink-muted); font-size: 17px;">
+            Your medical documents contain your most personal information. Here is how Healthie protects your privacy at every step — thoroughly explained in plain terms.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+          <div class="doctor-plan-card" style="margin: 0;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔒</div>
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Zero PHI Leakage</h3>
+            <p style="font-size: 14px; color: var(--color-ink-muted);">
+              Your personal health information (PHI) is isolated in your private ContextEngine storage namespace. It is never used to train public AI models or shared across users.
+            </p>
+          </div>
+
+          <div class="doctor-plan-card" style="margin: 0;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🛡️</div>
+            <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">HIPAA-Aligned Posture</div>
+            <p style="font-size: 14px; color: var(--color-ink-muted);">
+              Built with AWS KMS AES-256 encryption at rest, TLS 1.3 encryption in transit, strict IAM access controls, and CloudTrail audit logging.
+            </p>
+          </div>
+
+          <div class="doctor-plan-card" style="margin: 0;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔬</div>
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">PubMed Tier-1 Citations</h3>
+            <p style="font-size: 14px; color: var(--color-ink-muted);">
+              Healthie does not guess or make up answers. Every clinical finding is grounded directly in peer-reviewed PubMed and NIH literature with full citation links.
+            </p>
+          </div>
+
+          <div class="doctor-plan-card" style="margin: 0;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🩺</div>
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Fact vs Interpretation Safety</h3>
+            <p style="font-size: 14px; color: var(--color-ink-muted);">
+              Our Safety Agent strictly separates observed facts from potential interpretations. Healthie never diagnoses or prescribes — it prepares you to consult your doctor.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         VIEW 4: Pricing & Subscription Model ($9 / $19 per month)
          ========================================================================== -->
     <section class="view-section" id="view-pricing">
       <div class="container" style="padding-top: 40px; padding-bottom: 80px; text-align: center;">
@@ -312,7 +370,7 @@
     </section>
 
     <!-- ==========================================================================
-         VIEW 4: QA Agent Workbench & Testing Suite
+         VIEW 5: QA Agent Workbench & Testing Suite
          ========================================================================== -->
     <section class="view-section" id="view-qa-workbench">
       <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
@@ -440,7 +498,7 @@
   </main>
 
   <!-- ==========================================================================
-       AUTHENTICATION & OAUTH MODAL (Google, Apple, Email)
+       AUTHENTICATION & OAUTH MODAL (Frictionless: Direct to Dashboard, No Email Confirm)
        ========================================================================== -->
   <div class="modal-overlay" id="auth-modal">
     <div class="modal-card">
@@ -475,7 +533,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
-          Continue to Workspace →
+          Instant Access (Go Directly to Dashboard) →
         </button>
       </form>
     </div>
