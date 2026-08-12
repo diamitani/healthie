@@ -1,642 +1,487 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Healthie - Understand your health documents</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
-<style>
-  /* ===== Taste Skill locks =====
-     Color lock: teal is the single accent across the whole page.
-       Ochre appears ONLY as a real semantic state (an out-of-range health flag), never decoration.
-     Shape lock: one soft radius scale (sm/md/lg), applied consistently. All-soft page.
-     Theme lock: light / dark / auto chosen once at the page level, no mid-page flips. */
-  :root {
-    --color-primary: #01696f;
-    --color-primary-hover: #015157;
-    --color-primary-soft: #d9e8e6;
-    --color-surface: #F5F1E7;
-    --color-surface-alt: #ECE4D2;
-    --color-card: #FDFBF6;
-    --color-ink: #1B2420;
-    --color-ink-soft: #55625A;
-    --color-line: #D8CFBC;
-    --color-flag: #A85C2A;          /* semantic-only: out-of-range health flag */
-    --color-flag-soft: #F1E2D3;
-    --shadow-card: 0 1px 2px rgba(27,36,32,0.06), 0 8px 24px rgba(27,36,32,0.06);
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 16px;
-    color-scheme: light;
-  }
-  html.dark {
-    --color-primary: #4FB3B0;
-    --color-primary-hover: #6FC6C3;
-    --color-primary-soft: #16302E;
-    --color-surface: #0F1D1A;       /* off-black, never pure */
-    --color-surface-alt: #16302E;
-    --color-card: #142622;
-    --color-ink: #F1ECDD;           /* off-white, never pure */
-    --color-ink-soft: #AAB6AC;
-    --color-line: #2A423D;
-    --color-flag: #D99C6E;
-    --color-flag-soft: #2C2117;
-    --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
-    color-scheme: dark;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Healthie — ROSTR AI Health Document Intelligence & Doctor Plan</title>
+  <meta name="description" content="Plain-English health document intelligence powered by the ROSTR multi-agent framework. Process medical labs, imaging reports, and EOB bills into actionable doctor consultation plans.">
+  
+  <!-- Favicon & PWA iOS App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d9488'/><text y='70' x='18' font-size='65' fill='white'>H</text></svg>">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#0d9488">
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--color-surface);
-    color: var(--color-ink);
-    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-  .serif { font-family: 'Instrument Serif', Georgia, serif; }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
-  a { color: inherit; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
-
-  /* ---------- Nav (single line, <=80px) ---------- */
-  header {
-    position: sticky; top: 0; z-index: 40;
-    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--color-line);
-  }
-  .nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 32px; max-width: 1120px; margin: 0 auto;
-  }
-  .logo {
-    display: flex; align-items: center; gap: 10px;
-    font-family: 'Instrument Serif', serif; font-size: 24px; font-style: italic;
-    letter-spacing: 0.2px;
-  }
-  .logo-mark {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1.5px solid var(--color-primary); position: relative; flex-shrink: 0;
-  }
-  .logo-mark::after {
-    content: ""; position: absolute; inset: 6px;
-    background: var(--color-primary); border-radius: 50%;
-  }
-  nav.links { display: flex; gap: 36px; font-size: 14.5px; font-weight: 500; }
-  nav.links a { text-decoration: none; color: var(--color-ink-soft); transition: color 0.15s ease; }
-  nav.links a:hover { color: var(--color-ink); }
-  .nav-right { display: flex; align-items: center; gap: 16px; }
-  .theme-toggle {
-    width: 38px; height: 38px; border-radius: 50%;
-    border: 1px solid var(--color-line); background: var(--color-card);
-    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-ink);
-  }
-  .theme-toggle svg { width: 17px; height: 17px; }
-  .theme-toggle .moon { display: none; }
-  html.dark .theme-toggle .sun { display: none; }
-  html.dark .theme-toggle .moon { display: block; }
-
-  /* ---------- Buttons ---------- */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 22px; border-radius: var(--radius-sm);
-    font-size: 14.5px; font-weight: 600; text-decoration: none; cursor: pointer;
-    border: 1px solid transparent; transition: all 0.15s ease; white-space: nowrap;
-  }
-  .btn-primary { background: var(--color-primary); color: #FCFAF3; }
-  .btn-primary:hover { background: var(--color-primary-hover); }
-  .btn-ghost { background: transparent; border-color: var(--color-line); color: var(--color-ink); }
-  .btn-ghost:hover { border-color: var(--color-primary); }
-  .btn-sm { padding: 9px 16px; font-size: 13.5px; }
-
-  /* ---------- Hero ---------- */
-  .hero { padding: 84px 0 96px; }
-  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 64px; align-items: center; }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--color-primary); margin-bottom: 22px;
-  }
-  .eyebrow::before { content: ""; width: 16px; height: 1px; background: var(--color-primary); }
-  h1.hero-headline {
-    font-family: 'Instrument Serif', serif; font-weight: 400;
-    font-size: 58px; line-height: 1.05; letter-spacing: -0.01em; margin: 0 0 22px;
-  }
-  h1.hero-headline em { font-style: italic; color: var(--color-primary); }
-  .hero-sub { font-size: 18px; color: var(--color-ink-soft); max-width: 440px; margin: 0 0 32px; }
-  .hero-ctas { display: flex; gap: 14px; margin-bottom: 26px; flex-wrap: wrap; }
-  .hero-note { font-size: 13.5px; color: var(--color-ink-soft); }
-
-  /* ---------- Signature: document transform (editorial before/after illustration) ---------- */
-  .transform-panel {
-    position: relative; border-radius: var(--radius-lg); overflow: hidden;
-    border: 1px solid var(--color-line); box-shadow: var(--shadow-card);
-    background: var(--color-card); aspect-ratio: 4/5;
-  }
-  .transform-inner { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
-  .doc-raw {
-    background: var(--color-surface-alt); padding: 26px 20px;
-    font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; line-height: 1.75;
-    color: var(--color-ink-soft); overflow: hidden;
-    clip-path: polygon(0 0, 100% 0, 78% 100%, 0% 100%);
-  }
-  .doc-raw .line { white-space: nowrap; }
-  .doc-raw .redact {
-    display: inline-block; background: var(--color-line); color: transparent;
-    border-radius: 2px; padding: 0 2px;
-  }
-  .doc-raw .flagline { color: var(--color-flag); font-weight: 500; }
-  .doc-clean {
-    padding: 30px 24px 26px 46px; display: flex; flex-direction: column;
-    justify-content: center; gap: 16px;
-  }
-  .doc-clean .clean-eyebrow {
-    font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--color-primary);
-  }
-  .doc-clean h3 {
-    font-family: 'Instrument Serif', serif; font-weight: 400; font-style: italic;
-    font-size: 25px; margin: 0; line-height: 1.15;
-  }
-  .doc-clean p { font-size: 13px; color: var(--color-ink-soft); margin: 0; }
-  .clean-tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11.5px; font-weight: 500; color: var(--color-flag);
-    background: var(--color-flag-soft); padding: 5px 10px; border-radius: var(--radius-lg);
-    width: fit-content;
-  }
-  .transform-seam {
-    position: absolute; top: 0; bottom: 0; left: 39%; width: 1px;
-    background: var(--color-line); transform: skewX(-14deg);
-  }
-  .transform-caption {
-    position: absolute; bottom: 14px; left: 0; right: 0; text-align: center;
-    font-size: 11px; color: var(--color-ink-soft); letter-spacing: 0.02em;
-  }
-
-  /* ---------- Section shell ---------- */
-  section { padding: 88px 0; border-top: 1px solid var(--color-line); }
-  .section-head { max-width: 560px; margin-bottom: 48px; }
-  .section-head .eyebrow { margin-bottom: 16px; }
-  h2.section-title {
-    font-family: 'Instrument Serif', serif; font-weight: 400;
-    font-size: 38px; line-height: 1.12; margin: 0 0 14px;
-  }
-  h2.section-title em { font-style: italic; color: var(--color-primary); }
-  .section-desc { color: var(--color-ink-soft); font-size: 16px; max-width: 480px; }
-
-  /* ---------- Features: asymmetric bento (no 3-equal rows) ---------- */
-  .bento {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 20px;
-  }
-  .f-card {
-    background: var(--color-card); border: 1px solid var(--color-line);
-    border-radius: var(--radius-md); padding: 30px 28px;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-  .f-card .f-eyebrow {
-    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
-    color: var(--color-primary);
-  }
-  .f-card h3 { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 24px; margin: 0; }
-  .f-card p { font-size: 14.5px; color: var(--color-ink-soft); margin: 0; }
-  .f-lg { grid-column: span 5; min-height: 210px; }
-  .f-sm { grid-column: span 3; min-height: 210px; }
-  .f-wide { grid-column: span 8; flex-direction: row; align-items: center; justify-content: space-between; gap: 32px; }
-  .f-wide .f-body { max-width: 520px; }
-  .f-wide h3 { font-style: italic; }
-  .f-lg h3 { font-size: 28px; }
-
-  /* ---------- How it works (real sequence -> numbered) ---------- */
-  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
-  .step { padding: 0 24px 0 0; position: relative; }
-  .step:not(:last-child)::after {
-    content: ""; position: absolute; top: 13px; right: 0; width: 24px; height: 1px; background: var(--color-line);
-  }
-  .step-num {
-    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--color-primary);
-    border: 1px solid var(--color-primary); width: 26px; height: 26px;
-    display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 20px;
-  }
-  .step h4 { font-size: 15.5px; font-weight: 600; margin: 0 0 8px; }
-  .step p { font-size: 13.5px; color: var(--color-ink-soft); margin: 0; }
-
-  /* ---------- Security ---------- */
-  .security-band {
-    background: var(--color-surface-alt); border-radius: var(--radius-lg);
-    padding: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
-  }
-  .security-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .security-item {
-    background: var(--color-card); border: 1px solid var(--color-line);
-    border-radius: var(--radius-md); padding: 20px 22px;
-  }
-  .security-item .s-label { font-weight: 600; font-size: 14.5px; margin-bottom: 6px; }
-  .security-item .s-desc { color: var(--color-ink-soft); font-size: 13.5px; }
-
-  /* ---------- Pricing ---------- */
-  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .price-card {
-    background: var(--color-card); border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg); padding: 36px; display: flex; flex-direction: column;
-  }
-  .price-card.featured { border-color: var(--color-primary); box-shadow: var(--shadow-card); }
-  .price-tier {
-    font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--color-ink-soft); margin-bottom: 12px;
-  }
-  .price-card.featured .price-tier { color: var(--color-primary); }
-  .price-amount { font-family: 'Instrument Serif', serif; font-size: 44px; margin: 0 0 6px; }
-  .price-amount span { font-size: 15px; font-family: 'Satoshi'; color: var(--color-ink-soft); }
-  .price-desc { font-size: 14px; color: var(--color-ink-soft); margin: 0 0 28px; }
-  .price-features { list-style: none; margin: 0 0 32px; padding: 0; display: grid; gap: 12px; flex-grow: 1; }
-  .price-features li { font-size: 14px; display: flex; gap: 10px; align-items: baseline; }
-  .price-features li::before { content: "+"; color: var(--color-primary); font-weight: 600; flex-shrink: 0; }
-
-  /* ---------- FAQ ---------- */
-  .faq-list {
-    display: grid; gap: 14px;
-  }
-  details {
-    background: var(--color-card); border: 1px solid var(--color-line);
-    border-radius: var(--radius-md); padding: 22px 26px;
-  }
-  summary {
-    cursor: pointer; font-weight: 600; font-size: 15.5px; list-style: none;
-    display: flex; justify-content: space-between; align-items: center; gap: 20px;
-  }
-  summary::-webkit-details-marker { display: none; }
-  summary::after {
-    content: "+"; font-family: 'Instrument Serif', serif; font-size: 24px;
-    color: var(--color-primary); flex-shrink: 0; transition: transform 0.2s ease;
-  }
-  details[open] summary::after { transform: rotate(45deg); }
-  details p { margin: 14px 0 0; font-size: 14.5px; color: var(--color-ink-soft); max-width: 640px; }
-
-  /* ---------- Disclaimer ---------- */
-  .disclaimer {
-    display: flex; gap: 14px; background: var(--color-flag-soft);
-    border: 1px solid color-mix(in srgb, var(--color-flag) 30%, transparent);
-    border-radius: var(--radius-md); padding: 20px 22px; font-size: 13.5px;
-    color: var(--color-ink-soft); align-items: flex-start; margin-top: 32px;
-  }
-  .disclaimer strong { color: var(--color-ink); }
-
-  /* ---------- CTA ---------- */
-  .cta-band { text-align: center; padding: 96px 0; background: var(--color-surface-alt); border-top: 1px solid var(--color-line); }
-  .cta-band h2 { font-size: 44px; }
-  .cta-form { display: flex; gap: 10px; max-width: 420px; margin: 32px auto 0; }
-  .cta-form input {
-    flex: 1; padding: 12px 16px; border-radius: var(--radius-sm);
-    border: 1px solid var(--color-line); background: var(--color-card); color: var(--color-ink);
-    font-family: 'Satoshi', sans-serif; font-size: 14.5px;
-  }
-  .cta-form input:focus, .theme-toggle:focus-visible, .btn:focus-visible, summary:focus-visible {
-    outline: 2px solid var(--color-primary); outline-offset: 2px;
-  }
-
-  /* ---------- Footer ---------- */
-  footer { border-top: 1px solid var(--color-line); padding: 48px 0 40px; }
-  .footer-grid { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 32px; }
-  .footer-cols { display: flex; gap: 56px; flex-wrap: wrap; }
-  .footer-col h5 {
-    font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--color-ink-soft); margin: 0 0 14px;
-  }
-  .footer-col a { display: block; font-size: 14px; text-decoration: none; color: var(--color-ink); margin-bottom: 10px; }
-  .footer-col a:hover { color: var(--color-primary); }
-  .footer-bottom {
-    margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--color-line);
-    display: flex; justify-content: space-between; font-size: 13px; color: var(--color-ink-soft);
-    flex-wrap: wrap; gap: 12px;
-  }
-
-  @media (max-width: 860px) {
-    .wrap { padding: 0 20px; }
-    .nav { padding: 16px 20px; }
-    nav.links { display: none; }
-    .hero-grid { grid-template-columns: 1fr; }
-    h1.hero-headline { font-size: 40px; }
-    .transform-panel { aspect-ratio: 5/4; }
-    .bento { grid-template-columns: 1fr; gap: 16px; }
-    .f-lg, .f-sm, .f-wide { grid-column: auto; min-height: 0; }
-    .f-wide { flex-direction: column; align-items: flex-start; }
-    .steps { grid-template-columns: 1fr 1fr; row-gap: 32px; }
-    .step:nth-child(2)::after { display: none; }
-    .security-band { grid-template-columns: 1fr; padding: 32px 24px; }
-    .security-grid { grid-template-columns: 1fr; }
-    .pricing-grid { grid-template-columns: 1fr; }
-    .cta-band h2 { font-size: 32px; }
-    .cta-form { flex-direction: column; }
-    .footer-grid { flex-direction: column; }
-  }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
-</style>
+  <!-- Typography & Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header>
-  <div class="nav">
-    <div class="logo"><span class="logo-mark"></span> Healthie</div>
-    <nav class="links">
-      <a href="#features">Features</a>
-      <a href="#security">Security</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#faq">FAQ</a>
-    </nav>
-    <div class="nav-right">
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
-      </button>
-      <a href="#" class="btn btn-ghost btn-sm">Log in</a>
-      <a href="#cta" class="btn btn-primary btn-sm">Get early access</a>
-    </div>
-  </div>
-</header>
-
-<main>
-
-  <!-- HERO -->
-  <section class="hero" style="border-top:none;">
-    <div class="wrap hero-grid">
-      <div>
-        <div class="eyebrow">Plain-English health documents</div>
-        <h1 class="hero-headline">Upload your health documents.<br><em>Understand what they mean.</em></h1>
-        <p class="hero-sub">Read your labs, bills, and records in plain English. Private storage and chat over your own files.</p>
-        <div class="hero-ctas">
-          <a href="#cta" class="btn btn-primary">Get early access</a>
-          <a href="#how" class="btn btn-ghost">See how it works</a>
-        </div>
-        <p class="hero-note">No diagnosis, no guesswork. Every answer is grounded in your own document.</p>
+  <!-- ==========================================================================
+       Navigation Bar
+       ========================================================================== -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <div class="logo" id="nav-logo">
+        <img src="assets/brand/healthie-logo-primary-horizontal.svg" alt="Healthie.ai Logo" style="height: 38px; width: auto;" />
       </div>
 
-      <div class="transform-panel" aria-label="Illustration of a dense medical document turning into a plain-English summary">
-        <div class="transform-inner">
-          <div class="doc-raw">
-            <div class="line">PT: <span class="redact">████████</span></div>
-            <div class="line">DOB: <span class="redact">██/██/████</span></div>
-            <div class="line">&nbsp;</div>
-            <div class="line">LAB RESULT: CBC PANEL</div>
-            <div class="line">WBC .......... 11.8 H</div>
-            <div class="line">RBC .......... 4.9</div>
-            <div class="line">HGB .......... 13.2</div>
-            <div class="line">HCT .......... 39.4</div>
-            <div class="line">PLT ........... 402</div>
-            <div class="line">&nbsp;</div>
-            <div class="line flagline">FLAG: WBC ABOVE RANGE</div>
-            <div class="line">REF: 4.5 to 11.0</div>
-            <div class="line">&nbsp;</div>
-            <div class="line">CPT 85025 .. $184.00</div>
-            <div class="line">ADJ ......... -$97.40</div>
-            <div class="line">YOU OWE .... $86.60</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a class="nav-link active" data-view-target="landing">Overview</a></li>
+          <li><a class="nav-link" data-view-target="workspace">Workspace & Vault</a></li>
+          <li><a class="nav-link" data-view-target="pricing">Pricing ($9-$19)</a></li>
+          <li><a class="nav-link" data-view-target="qa-workbench">QA Workbench</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Theme Switcher Button -->
+        <button class="btn btn-ghost btn-icon-only" id="theme-toggle" title="Toggle Light/Dark Theme">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+
+        <!-- Logged Out Controls -->
+        <div id="nav-logged-out" style="display: flex; gap: 10px;">
+          <button class="btn btn-ghost btn-sm" id="btn-nav-login">Sign In</button>
+          <button class="btn btn-primary btn-sm" id="btn-nav-signup">Get Started</button>
+        </div>
+
+        <!-- Logged In Controls -->
+        <div id="nav-logged-in" style="display: none; align-items: center; gap: 12px;">
+          <span style="font-size: 13.5px; font-weight: 600;" id="user-display-name">User</span>
+          <button class="btn btn-outline btn-sm" id="btn-nav-logout">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================================================================
+         VIEW 1: SaaS Unicorn Landing Page & Hero
+         ========================================================================== -->
+    <section class="view-section active" id="view-landing">
+      <div class="hero">
+        <div class="hero-glow"></div>
+        <div class="container hero-grid">
+          <div>
+            <div class="hero-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Standard SaaS Unicorn Health Intelligence
+            </div>
+            
+            <h1 class="hero-title">
+              Understand Your Health Documents <br>
+              <span class="gradient-text">Prepare Your Doctor Consults.</span>
+            </h1>
+
+            <p class="hero-subtitle">
+              Turn confusing lab reports, blood panels, and EOB medical bills into plain-English answers grounded in PubMed clinical literature — complete with a step-by-step doctor consultation plan.
+            </p>
+
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" id="btn-hero-cta">
+                Analyze Document Free
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+
+              <button class="btn btn-secondary btn-lg" id="toggle-ios-mode">
+                📱 Launch iPhone App Preview
+              </button>
+            </div>
+
+            <div class="hero-guarantee">
+              <span>🔒 HIPAA-Aligned Privacy</span>
+              <span>•</span>
+              <span>🔬 PubMed Tier-1 Grounding</span>
+              <span>•</span>
+              <span>⚡ 99.4% Extraction Accuracy</span>
+            </div>
           </div>
-          <div class="doc-clean">
-            <div class="clean-eyebrow">What it means</div>
-            <h3>Your white blood cell count is slightly high.</h3>
-            <p>This can happen with a minor infection or recent illness. It is one value out of five, and the rest are within normal range.</p>
-            <div class="clean-tag">Worth a follow-up question</div>
+
+          <!-- Glassmorphic Hero Interactive Preview Card -->
+          <div class="hero-card-preview">
+            <div class="hero-card-header">
+              <div class="patient-pill">
+                <div class="patient-avatar">H</div>
+                <div>
+                  <div style="font-weight: 700; font-size: 15px;">Complete Blood Count (CBC)</div>
+                  <div style="font-size: 12px; color: var(--color-ink-muted);">Processed by ROSTR Agent Team</div>
+                </div>
+              </div>
+              <span class="badge badge-warning">1 Marker Flagged</span>
+            </div>
+
+            <div class="agent-pipeline">
+              <div class="pipeline-step active">
+                <div class="step-icon">🔬</div>
+                <div class="step-info">
+                  <div class="step-title">WBC (White Blood Cells): 11.8 H</div>
+                  <div class="step-desc">Ref Range: 4.5 - 11.0 x10E3/uL (Slightly Above Normal)</div>
+                </div>
+                <span class="badge badge-primary">RAG DAL</span>
+              </div>
+            </div>
+
+            <div style="padding: 16px; border-radius: var(--radius-md); background: var(--color-surface-alt); margin-bottom: 16px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--color-primary); margin-bottom: 4px;" class="mono">PLAIN ENGLISH BREAKDOWN</div>
+              <p style="font-size: 13.5px; color: var(--color-ink-muted);">
+                Your white blood cell count is 11.8, slightly above the standard 11.0 upper threshold. In PubMed literature, mild elevations are frequently caused by recent physical exertion, mild allergies, or standard immune response — while Hemoglobin & Platelets remain completely optimal.
+              </p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="document.querySelector('[data-view-target=\'workspace\']').click()">
+                View Full Doctor Consultation Plan →
+              </button>
+            </div>
           </div>
         </div>
-        <div class="transform-seam"></div>
-        <div class="transform-caption">the same result, before and after Healthie</div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FEATURES: asymmetric bento -->
-  <section id="features">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="eyebrow">What Healthie does</div>
-        <h2 class="section-title">Everything you upload, turned into <em>plain English.</em></h2>
-      </div>
-      <div class="bento">
-        <div class="f-card f-lg">
-          <span class="f-eyebrow">Records</span>
-          <h3>Medical records, made readable</h3>
-          <p>Lab results, visit notes, and imaging reports translated out of clinical shorthand into language you can actually use.</p>
-        </div>
-        <div class="f-card f-sm">
-          <span class="f-eyebrow">Billing</span>
-          <h3>Bills and EOBs, explained</h3>
-          <p>See what you owe, what insurance covered, and why, line by line.</p>
-        </div>
-        <div class="f-card f-sm">
-          <span class="f-eyebrow">Chat</span>
-          <h3>Ask your documents</h3>
-          <p>Every answer is grounded in the file you uploaded, with citations.</p>
-        </div>
-        <div class="f-card f-lg">
-          <span class="f-eyebrow">Security</span>
-          <h3>Private by design, on AWS</h3>
-          <p>Encrypted storage, signed URLs, and access controls built in from the first upload, not bolted on later.</p>
-        </div>
-        <div class="f-card f-wide">
-          <div class="f-body">
-            <span class="f-eyebrow">Cost</span>
-            <h3>Bring your own key</h3>
-            <p>Connect your own Gemini key for lower-cost usage. Encrypted with AWS KMS, and never shared.</p>
+    <!-- ==========================================================================
+         VIEW 2: User Workspace Dashboard & Document Intelligence Vault
+         ========================================================================== -->
+    <section class="view-section" id="view-workspace">
+      <div class="container" style="padding-top: 40px; padding-bottom: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+          <div>
+            <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">Health Intelligence Workspace</h2>
+            <p style="color: var(--color-ink-muted);">Upload lab reports, imaging notes, or medical bills to generate plain-English insights.</p>
           </div>
-          <a href="#pricing" class="btn btn-ghost">See pricing</a>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-outline btn-sm" data-preset-id="cbc">Load Sample CBC Lab</button>
+            <button class="btn btn-outline btn-sm" data-preset-id="lipid">Load Sample Lipid Panel</button>
+            <button class="btn btn-outline btn-sm" data-preset-id="eob">Load Sample Medical EOB</button>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Uploader -->
+        <div class="upload-dropzone" id="upload-dropzone">
+          <div class="upload-icon">📄</div>
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">Drop your medical document or image here</h3>
+          <p style="font-size: 14px; color: var(--color-ink-muted); margin-bottom: 16px;">Supports PDF, PNG, JPG (Lab results, MyChart exports, Blood panels, EOB bills)</p>
+          <button class="btn btn-primary btn-sm">Browse Files from Device</button>
+          <input type="file" id="file-input" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+
+        <!-- Real-Time ROSTR Agent Execution Pipeline Stepper -->
+        <div class="hero-card-preview" id="pipeline-stepper" style="display: none; margin-top: 32px;">
+          <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">ROSTR Multi-Agent Orchestration Stepper</h4>
+          <div class="agent-pipeline">
+            <div class="pipeline-step" id="step-intake">
+              <div class="step-icon">🤖</div>
+              <div class="step-info">
+                <div class="step-title">1. PAL Intake Agent</div>
+                <div class="step-desc">Classifying document and extracting clinical text...</div>
+              </div>
+              <span class="step-status badge-secondary">Pending</span>
+            </div>
+
+            <div class="pipeline-step" id="step-analysis">
+              <div class="step-icon">🔬</div>
+              <div class="step-info">
+                <div class="step-title">2. NPAO Classifier & Medical Analyst</div>
+                <div class="step-desc">Sorting Necessity vs Anxiety out-of-range flags...</div>
+              </div>
+              <span class="step-status badge-secondary">Pending</span>
+            </div>
+
+            <div class="pipeline-step" id="step-rag">
+              <div class="step-icon">📚</div>
+              <div class="step-info">
+                <div class="step-title">3. RAG DAL Grounding Agent</div>
+                <div class="step-desc">Querying PubMed Tier-1 medical literature...</div>
+              </div>
+              <span class="step-status badge-secondary">Pending</span>
+            </div>
+
+            <div class="pipeline-step" id="step-safety">
+              <div class="step-icon">🛡️</div>
+              <div class="step-info">
+                <div class="step-title">4. Safety Agent & Doctor Health Plan Generator</div>
+                <div class="step-desc">Verifying non-diagnosis boundaries & creating consult sheet...</div>
+              </div>
+              <span class="step-status badge-secondary">Pending</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Analysis Results Card -->
+        <div class="doctor-plan-card" id="analysis-results-card" style="display: none;">
+          <div class="plan-header">
+            <div>
+              <span class="badge badge-primary" style="margin-bottom: 8px;">ROSTR Document Intelligence Output</span>
+              <h3 style="font-size: 24px; font-weight: 800;" id="result-title">Document Title</h3>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Export Doctor PDF</button>
+          </div>
+
+          <div class="plan-section">
+            <div class="plan-section-title">💬 Plain-English Executive Summary</div>
+            <p style="font-size: 15px; color: var(--color-ink-muted); line-height: 1.7;" id="result-summary"></p>
+          </div>
+
+          <div class="plan-section">
+            <div class="plan-section-title">📊 Extracted Findings & Biomarker Ranges</div>
+            <table style="width: 100%; border-collapse: collapse; background: var(--color-surface-bg); border-radius: var(--radius-md); overflow: hidden;">
+              <thead>
+                <tr style="background: var(--color-surface-alt); text-align: left; font-size: 13px; color: var(--color-ink-muted);">
+                  <th style="padding: 12px;">Marker / Charge</th>
+                  <th style="padding: 12px;">Extracted Value</th>
+                  <th style="padding: 12px;">Reference Range</th>
+                  <th style="padding: 12px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="result-markers-body"></tbody>
+            </table>
+          </div>
+
+          <div class="plan-section">
+            <div class="plan-section-title">🔬 RAG DAL Tier-1 PubMed Citations</div>
+            <div id="result-citations-list"></div>
+          </div>
+
+          <!-- Doctor Consultation Prep & Health Plan -->
+          <div class="plan-section" style="background: var(--color-primary-light); padding: 24px; border-radius: var(--radius-lg); margin-top: 32px;">
+            <div class="plan-section-title" style="color: var(--color-primary-dark);">
+              📋 Doctor Consultation Health Plan — Questions to Ask Your Clinician
+            </div>
+            <p style="font-size: 14px; color: var(--color-ink-muted); margin-bottom: 16px;">
+              Use these 5 tailored questions during your next appointment to review these findings with your doctor effectively:
+            </p>
+            <div class="questions-list" id="doctor-questions-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         VIEW 3: Pricing & Subscription Model ($9 / $19 per month)
+         ========================================================================== -->
+    <section class="view-section" id="view-pricing">
+      <div class="container" style="padding-top: 40px; padding-bottom: 80px; text-align: center;">
+        <span class="badge badge-primary">Flexible Monetization</span>
+        <h2 style="font-size: 40px; font-weight: 800; margin: 12px 0 8px;">Simple, Transparent Pricing</h2>
+        <p style="color: var(--color-ink-muted); max-width: 540px; margin: 0 auto 32px;">
+          Choose the right plan to manage your medical records and prepare for your doctor visits with confidence.
+        </p>
+
+        <div class="pricing-grid">
+          <!-- Starter Plan $9/month -->
+          <div class="pricing-card">
+            <h3 style="font-size: 20px; font-weight: 700;">Starter Plan</h3>
+            <p style="font-size: 13.5px; color: var(--color-ink-muted); margin-top: 4px;">Essential health document intelligence for individuals.</p>
+            
+            <div class="pricing-price">$9 <span>/ month</span></div>
+
+            <ul class="pricing-features">
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 10 Document Analyses per month</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> PubMed Tier-1 & Tier-2 Citations</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Doctor Consultation Plan Generator</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Plain-English Medical & Billing Summaries</li>
+            </ul>
+
+            <button class="btn btn-outline btn-lg" onclick="alert('Starter Plan selected ($9/mo). Proceeding to secure checkout...')">Select Starter ($9/mo)</button>
+          </div>
+
+          <!-- Pro Plan $19/month -->
+          <div class="pricing-card featured">
+            <div class="pricing-badge">MOST POPULAR</div>
+            <h3 style="font-size: 20px; font-weight: 700;">Pro Health Vault</h3>
+            <p style="font-size: 13.5px; color: var(--color-ink-muted); margin-top: 4px;">Comprehensive intelligence for families & complex cases.</p>
+            
+            <div class="pricing-price">$19 <span>/ month</span></div>
+
+            <ul class="pricing-features">
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <strong>Unlimited</strong> Document Analyses</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Longitudinal Biomarker Trend Tracking</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 1-Click Printable Doctor Consult PDF Export</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Family Workspace (Up to 4 Sub-Profiles)</li>
+            </ul>
+
+            <button class="btn btn-primary btn-lg" onclick="alert('Pro Plan selected ($19/mo). Proceeding to secure checkout...')">Select Pro Vault ($19/mo)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         VIEW 4: QA Agent Workbench & Testing Suite
+         ========================================================================== -->
+    <section class="view-section" id="view-qa-workbench">
+      <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+          <div>
+            <span class="badge badge-secondary">ROSTR Framework Testing</span>
+            <h2 style="font-size: 32px; font-weight: 800; margin-top: 6px;">QA Agent Team Workbench</h2>
+            <p style="color: var(--color-ink-muted);">Inspect the 6 child agents in the ROSTR team and run synthetic validation tests.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-run-qa">▶ Run Synthetic QA Suite</button>
+        </div>
+
+        <div class="qa-workbench-container">
+          <h3 style="font-size: 18px; font-weight: 700;">ROSTR Agent Team Roster</h3>
+          <div class="agent-grid">
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>PAL Intake Agent</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Classifies documents into Medical vs Billing; runs Textract OCR.</p>
+            </div>
+
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>Medical Records Analyst</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Evaluates lab reference ranges, marks anxiety-class flags.</p>
+            </div>
+
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>Billing Analyst</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Parses CPT codes, EOB coverage, and out-of-pocket costs.</p>
+            </div>
+
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>RAG DAL Agent</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Retrieves Tier 1 PubMed & NIH clinical literature citations.</p>
+            </div>
+
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>Safety Guardrail Agent</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Enforces non-diagnosis boundary and HIPAA privacy rules.</p>
+            </div>
+
+            <div class="agent-card">
+              <div class="agent-card-header">
+                <strong>UX & Doctor Plan Agent</strong>
+                <span class="agent-status-indicator"></span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--color-ink-muted);">Rewrites findings to laymen's terms & builds consultation prep sheet.</p>
+            </div>
+          </div>
+
+          <div style="margin-top: 24px;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;" class="mono">QA EXECUTION CONSOLE LOG</div>
+            <pre id="qa-console-log" style="background: #0f172a; color: #38bdf8; padding: 16px; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 12.5px; height: 160px; overflow-y: auto;">Click "Run Synthetic QA Suite" to test all 6 ROSTR agents...</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         COMPLEMENTARY iOS MOBILE APP SIMULATOR (iPhone Viewport)
+         ========================================================================== -->
+    <div id="ios-simulator-frame" style="display: none; padding: 40px 0;">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span class="badge badge-primary">iPhone PWA Mobile App Preview</span>
+      </div>
+      <div class="ios-device-frame">
+        <div class="ios-notch"></div>
+        <div class="ios-content">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+            <div class="logo-icon" style="width: 28px; height: 28px; font-size: 12px;">H</div>
+            <span style="font-weight: 800; font-size: 16px;">Healthie iOS</span>
+          </div>
+
+          <div style="background: var(--brand-gradient); color: #fff; padding: 16px; border-radius: var(--radius-lg); margin-bottom: 16px;">
+            <div style="font-size: 12px; opacity: 0.9;">Doctor Consultation Plan</div>
+            <div style="font-size: 18px; font-weight: 800; margin-top: 4px;">CBC Panel Analysis</div>
+            <div style="font-size: 12px; margin-top: 12px;">5 Questions prepared for clinician consult.</div>
+          </div>
+
+          <div class="preset-card" style="margin-bottom: 12px;">
+            <div style="font-weight: 700; font-size: 14px;">📄 Upload New Lab Scan</div>
+            <div style="font-size: 12px; color: var(--color-ink-muted);">Take photo with iPhone camera</div>
+          </div>
+
+          <div class="preset-card">
+            <div style="font-weight: 700; font-size: 14px;">📊 Recent Biomarkers</div>
+            <div style="font-size: 12px; color: var(--color-ink-muted);">WBC: 11.8 H (Requires Consult)</div>
+          </div>
+        </div>
+
+        <div class="ios-bottom-bar">
+          <div class="ios-tab-item active">
+            <span>🏠</span>
+            <span>Home</span>
+          </div>
+          <div class="ios-tab-item">
+            <span>📄</span>
+            <span>Vault</span>
+          </div>
+          <div class="ios-tab-item">
+            <span>📋</span>
+            <span>Doctor Plan</span>
+          </div>
+          <div class="ios-tab-item">
+            <span>⚙️</span>
+            <span>Settings</span>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </main>
 
-  <!-- HOW IT WORKS -->
-  <section id="how">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="eyebrow">The process</div>
-        <h2 class="section-title">From upload to <em>understanding</em>, in four steps.</h2>
+  <!-- ==========================================================================
+       AUTHENTICATION & OAUTH MODAL (Google, Apple, Email)
+       ========================================================================== -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 id="auth-modal-title" style="font-size: 20px; font-weight: 800;">Welcome to Healthie</h3>
+        <button id="auth-modal-close" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
       </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <h4>Upload</h4>
-          <p>Drop in a PDF or photo of a lab result, visit note, or bill.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <h4>Understand</h4>
-          <p>Healthie summarizes it in plain English and flags anything worth noting.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <h4>Ask</h4>
-          <p>Chat with the document. Every answer cites the source text.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <h4>Act</h4>
-          <p>Export a clean summary to bring to your clinician or insurer.</p>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- SECURITY -->
-  <section id="security">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="eyebrow">Security &amp; privacy</div>
-        <h2 class="section-title">Handled the way health information <em>should</em> be.</h2>
-      </div>
-      <div class="security-band">
-        <div>
-          <p class="section-desc">Your documents are encrypted, access-controlled, and handled with a security-first architecture. Every upload stays private by default.</p>
-        </div>
-        <div class="security-grid">
-          <div class="security-item"><div class="s-label">Encryption</div><div class="s-desc">At rest and in transit, on AWS-backed storage.</div></div>
-          <div class="security-item"><div class="s-label">Access control</div><div class="s-desc">Signed, time-limited URLs. Nothing is publicly reachable.</div></div>
-          <div class="security-item"><div class="s-label">Key management</div><div class="s-desc">Secrets and BYOK credentials encrypted via AWS KMS.</div></div>
-          <div class="security-item"><div class="s-label">Audit logging</div><div class="s-desc">Every access to your documents is recorded.</div></div>
-        </div>
-      </div>
-    </div>
-  </section>
+      <div class="auth-options">
+        <button class="btn btn-outline" id="btn-oauth-google" style="width: 100%;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Continue with Google
+        </button>
 
-  <!-- PRICING -->
-  <section id="pricing">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="eyebrow">Pricing</div>
-        <h2 class="section-title">Start free. Bring your own key <em>for lower cost.</em></h2>
+        <button class="btn btn-outline" id="btn-oauth-apple" style="width: 100%;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.34c.67-.82 1.12-1.96.99-3.1-.96.04-2.14.64-2.83 1.44-.61.71-1.14 1.87-.99 2.99 1.08.08 2.17-.51 2.83-1.33z"/></svg>
+          Continue with Apple
+        </button>
       </div>
-      <div class="pricing-grid">
-        <div class="price-card">
-          <div class="price-tier">Hosted</div>
-          <div class="price-amount">Free<span> during early access</span></div>
-          <p class="price-desc">Uses Healthie's hosted model. The simplest way to start, with no setup required.</p>
-          <ul class="price-features">
-            <li>Unlimited document uploads</li>
-            <li>Plain-English summaries</li>
-            <li>Chat with citations</li>
-            <li>Standard processing speed</li>
-          </ul>
-          <a href="#cta" class="btn btn-ghost">Get early access</a>
-        </div>
-        <div class="price-card featured">
-          <div class="price-tier">BYOK</div>
-          <div class="price-amount">Your key<span> / usage-based</span></div>
-          <p class="price-desc">Connect your own Gemini API key for lower per-document cost at higher volume.</p>
-          <ul class="price-features">
-            <li>Everything in Hosted</li>
-            <li>Lower cost per document</li>
-            <li>Key encrypted with AWS KMS</li>
-            <li>Session-only key option</li>
-          </ul>
-          <a href="#cta" class="btn btn-primary">Get early access</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- FAQ -->
-  <section id="faq">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="eyebrow">Questions</div>
-        <h2 class="section-title">Things people <em>ask</em> before uploading.</h2>
-      </div>
-      <div class="faq-list">
-        <details open>
-          <summary>Is Healthie a substitute for my doctor?</summary>
-          <p>No. Healthie helps you understand your documents, but it does not replace medical or financial professionals. Always confirm findings with a licensed clinician.</p>
-        </details>
-        <details>
-          <summary>What file types can I upload?</summary>
-          <p>PDFs and photos of documents: lab results, visit notes, imaging reports, bills, EOBs, and MyChart exports.</p>
-        </details>
-        <details>
-          <summary>Can Healthie diagnose me?</summary>
-          <p>No. Healthie explains what a document says and flags things worth asking about. It never diagnoses or recommends treatment.</p>
-        </details>
-        <details>
-          <summary>What is BYOK, and do I need it?</summary>
-          <p>BYOK means connecting your own Gemini API key. It is optional. The hosted option works fully out of the box, and BYOK just lowers cost at higher usage.</p>
-        </details>
-        <details>
-          <summary>How is my data kept private?</summary>
-          <p>Documents are encrypted at rest and in transit, stored with signed access URLs, and never used to train models without your consent.</p>
-        </details>
-      </div>
-      <div class="disclaimer">
-        <span class="mono" style="font-size:11px; padding-top:2px;">NOTE</span>
-        <div><strong>Healthie helps you understand your documents</strong>, but it does not replace medical or financial professionals. For diagnosis, treatment, or financial planning, consult a licensed provider.</div>
-      </div>
-    </div>
-  </section>
+      <div class="divider"><span>OR EMAIL</span></div>
 
-  <!-- CTA -->
-  <section id="cta" class="cta-band">
-    <div class="wrap">
-      <div class="eyebrow" style="justify-content:center; display:inline-flex;">Early access</div>
-      <h2 class="serif" style="font-weight:400;">Bring your next document. <em style="color:var(--color-primary);">We'll help you read it.</em></h2>
-      <form class="cta-form" onsubmit="event.preventDefault(); this.querySelector('button').textContent='You are on the list';">
-        <input type="email" placeholder="you@example.com" required aria-label="Email address">
-        <button type="submit" class="btn btn-primary">Get early access</button>
+      <form id="auth-form">
+        <div class="form-group">
+          <label class="form-label" for="auth-email">Email Address</label>
+          <input type="email" class="form-input" id="auth-email" placeholder="you@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="auth-pass">Password</label>
+          <input type="password" class="form-input" id="auth-pass" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+          Continue to Workspace →
+        </button>
       </form>
     </div>
-  </section>
-
-</main>
-
-<footer>
-  <div class="wrap">
-    <div class="footer-grid">
-      <div class="logo"><span class="logo-mark"></span> Healthie</div>
-      <div class="footer-cols">
-        <div class="footer-col">
-          <h5>Product</h5>
-          <a href="#features">Features</a>
-          <a href="#security">Security</a>
-          <a href="#pricing">Pricing</a>
-        </div>
-        <div class="footer-col">
-          <h5>Company</h5>
-          <a href="#">About</a>
-          <a href="#">Resources</a>
-          <a href="#faq">FAQ</a>
-        </div>
-        <div class="footer-col">
-          <h5>Legal</h5>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Security policy</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 Healthie. Not a substitute for professional medical or financial advice.</span>
-      <span>Built with care in the U.S.</span>
-    </div>
   </div>
-</footer>
 
-<script>
-  function toggleTheme() {
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('healthie-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-  }
-  (function () {
-    var saved = localStorage.getItem('healthie-theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (saved === 'dark' || (!saved && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    }
-  })();
-</script>
-
+  <!-- Scripts -->
+  <script src="app.js"></script>
 </body>
 </html>

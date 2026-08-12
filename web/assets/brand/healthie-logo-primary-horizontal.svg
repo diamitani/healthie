@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100" role="img" aria-label="Healthie.ai Logo">
+  <defs>
+    <!-- SaaS Unicorn Radiant Gradient -->
+    <linearGradient id="healthie-brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+
+    <linearGradient id="healthie-shield-glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Glow Effect Filter -->
+    <filter id="unicorn-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- ICON LOCKUP -->
+  <g id="logo-icon" transform="translate(10, 10)">
+    <!-- Base Glow Shadow -->
+    <rect x="4" y="4" width="72" height="72" rx="22" fill="url(#healthie-brand-grad)" opacity="0.3" filter="url(#unicorn-glow)" />
+
+    <!-- Main Icon Container -->
+    <rect x="4" y="4" width="72" height="72" rx="22" fill="url(#healthie-brand-grad)" />
+    <rect x="4" y="4" width="72" height="72" rx="22" fill="url(#healthie-shield-glow)" />
+
+    <!-- Health Shield + Medical Document Leaf -->
+    <path d="M40 22 C28 22 22 26 22 34 V48 C22 60 33 68 40 70 C47 68 58 60 58 48 V34 C58 26 52 22 40 22 Z" 
+          fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Medical Pulse Cross -->
+    <path d="M40 32 V54 M29 43 H51" 
+          stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- AI Intelligence Spark Star -->
+    <circle cx="58" cy="22" r="5" fill="#38bdf8" />
+  </g>
+
+  <!-- WORDMARK LOCKUP -->
+  <g id="logo-wordmark" transform="translate(104, 58)">
+    <!-- Main Text -->
+    <text font-family="'Outfit', sans-serif" font-size="42" font-weight="800" letter-spacing="-1.2" fill="#0f172a">
+      Healthie
+    </text>
+    <!-- AI Tag -->
+    <text font-family="'Outfit', sans-serif" font-size="42" font-weight="800" letter-spacing="-1" fill="url(#healthie-brand-grad)" dx="4">
+      .ai
+    </text>
+    <!-- Tagline Subtext -->
+    <text font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="600" letter-spacing="1.5" fill="#64748b" y="18" x="2">
+      ROSTR MULTI-AGENT HEALTH INTEL
+    </text>
+  </g>
+</svg>
